@@ -141,6 +141,46 @@ function condition_mutation_weights!(
 end
 
 """
+Condition mutation weights for small trees to avoid mutations that would fail.
+"""
+function condition_mutation_weights_for_small_trees!(
+    weights::AbstractMutationWeights,
+    member::PopMember,
+    options::AbstractOptions,
+    curmaxsize::Int
+)
+    # Get tree size - works for both Node and Expression types
+    tree_size = if isa(member.tree, AbstractExpression)
+        length(get_tree(member.tree))
+    else
+        length(member.tree)
+    end
+    
+    # Disable mutations that require larger trees
+    if curmaxsize <= 3 || tree_size < 5
+        weights.form_connection = 0.0  # Requires 5+ nodes
+        weights.break_connection = 0.0  # Meaningless for small trees
+    end
+    
+    if curmaxsize <= 2
+        weights.insert_node = 0.0  # Would exceed size
+        weights.add_node = 0.0     # Would exceed size
+    end
+    
+    if tree_size == 1
+        weights.delete_node = 0.0  # Can't delete the only node
+        weights.mutate_operator = 0.0  # No operators to mutate
+    end
+    
+    # For very small trees, reduce randomize probability
+    if tree_size <= 2
+        weights.randomize *= 0.1
+    end
+    
+    return nothing
+end
+
+"""
 Use this to modify how `mutate_constant` changes for an expression type.
 """
 function condition_mutate_constant!(
@@ -180,6 +220,7 @@ end
     weights = copy(options.mutation_weights)
 
     condition_mutation_weights!(weights, member, options, curmaxsize)
+    condition_mutation_weights_for_small_trees!(weights, member, options, curmaxsize)
 
     mutation_choice = sample_mutation(weights)
 

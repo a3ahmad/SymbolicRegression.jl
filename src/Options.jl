@@ -793,7 +793,10 @@ $(OPTION_DESCRIPTIONS)
         )
     end
 
-    @assert maxsize > 3
+    @assert maxsize >= 1
+    if maxsize <= 3
+        @warn "maxsize=$maxsize is very small. Some mutations will be automatically disabled for trees that don't meet size requirements."
+    end
     @assert warmup_maxsize_by >= 0.0f0
     @assert tournament_selection_n < population_size "`tournament_selection_n` must be less than `population_size`"
     @assert loss_scale in (:log, :linear) "`loss_scale` must be either log or linear"

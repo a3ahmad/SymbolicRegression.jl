@@ -46,11 +46,15 @@ function Population(
     else
         npop
     end
+    
+    # Adjust nlength for small maxsize
+    adjusted_nlength = min(nlength, max(1, options.maxsize - 1))
+    
     return Population(
         [
             PopMember(
                 dataset,
-                gen_random_tree(nlength, options, nfeatures, T),
+                gen_random_tree(adjusted_nlength, options, nfeatures, T),
                 options;
                 parent=-1,
                 deterministic=options.deterministic,
